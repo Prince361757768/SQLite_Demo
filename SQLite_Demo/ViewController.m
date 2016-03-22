@@ -8,21 +8,47 @@
 
 #import "ViewController.h"
 #import "sqlite3.h"
+#import "addViewController.h"
+#import "updateViewController.h"
+
 
 #define DBNAME    @"person.sqlite"
 #define NAME      @"name"
 #define AGE       @"age"
 #define ADDRESS   @"address"
 #define TABLENAME @"PERSONINFO"
-@interface ViewController ()
+@interface ViewController ()<UITableViewDataSource,UITableViewDelegate,addinformationDelegate>
 
 @property (nonatomic, assign) sqlite3 *db;
+@property (weak, nonatomic) IBOutlet UITableView *DBTableView;
+@property (strong, nonatomic) NSMutableArray *array;
+
 @end
 
 @implementation ViewController
 @synthesize db;
+
++(ViewController *)sharedDB{
+    static dispatch_once_t pred;
+    static ViewController *vc = nil;
+    dispatch_once(&pred, ^{
+        vc = [[ViewController alloc] init];
+    });
+    return vc;
+}
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.array = [[NSMutableArray alloc]init];
+    
+    [self openDB];
+    [self createTable];
+}
+- (void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    [self select:nil];
+}
+- (void)openDB{
+    
     //获取沙盒目录
     NSString *path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
     NSString *dbPath = [path stringByAppendingPathComponent:DBNAME];
@@ -35,10 +61,7 @@
         NSLog(@"打开数据库文件失败:%s", sqlite3_errmsg(db));
         return;
     }
-    NSLog(@"打开数据库成功");
-    [self createTable];
 }
-
 - (void)createTable{
     //创建表
 
@@ -51,28 +74,61 @@
     }
 }
 
+- (void)updateDBWithDic:(NSDictionary *)dic{
+    NSString *sql=[NSString stringWithFormat:@"UPDATE PERSONINFO SET name='%@' , age = '%@', address = '%@' WHERE id='%@'",dic[@"name"], dic[@"age"], dic[@"address"],dic[@"userId"]];
+    [self execSql:sql];
+}
+
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
-- (IBAction)addTouch:(id)sender {
-    NSString *sql1 = [NSString stringWithFormat:
-                      @"INSERT INTO '%@' ('%@', '%@', '%@') VALUES ('%@', '%@', '%@')",
-                      TABLENAME, NAME, AGE, ADDRESS, @"张三", @"23", @"西城区"];
-    [self execSql:sql1];
 
-    NSString *sql2 = @"INSERT INTO 'PERSONINFO' ('name', 'age', 'address') VALUES ('大麦', '23', '元嘉国际')";
-    [self execSql:sql2];
+#pragma mark - ClickAction
+- (IBAction)addTouch:(id)sender {
+//    NSString *sql1 = [NSString stringWithFormat:
+//                      @"INSERT INTO '%@' ('%@', '%@', '%@') VALUES ('%@', '%@', '%@')",
+//                      TABLENAME, NAME, AGE, ADDRESS, @"张三", @"23", @"西城区"];
+//    [self execSql:sql1];
+//
+//    NSString *sql2 = @"INSERT INTO 'PERSONINFO' ('name', 'age', 'address') VALUES ('大麦', '23', '元嘉国际')";
+//    [self execSql:sql2];
+
+    addViewController *addVC = [[addViewController alloc]init];
+    addVC.delegate = self;
+    [self presentViewController:addVC animated:YES completion:nil];
+
 }
 - (IBAction)delete:(id)sender {
     
-}
-- (IBAction)update:(id)sender {
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"提示信息" message:@"是否删除所有记录\n(左滑列表可以删除单条数据)" preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIAlertAction *determineAction = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        NSString *sql=[NSString stringWithFormat:@"DELETE FROM PERSONINFO"];
+        [self execSql:sql];
+    
+    }];
+    
+        UIAlertAction *otherAction = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            NSLog(@"The \"Okay/Cancel\" alert's other action occured.");
+        }];
 
+    // Add the actions.
+    [alertController addAction:otherAction];
+    [alertController addAction:determineAction];
+    
+    
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+- (IBAction)close:(id)sender {
+    sqlite3_close(db);
+    exit(0);
 }
 - (IBAction)select:(id)sender {
     
+    [self.array removeAllObjects];
     NSString *sqlQuery = @"SELECT * FROM PERSONINFO";
+//    [self execSql:sqlQuery];
     sqlite3_stmt * statement;
     //sqlite3_prepare_v2 接口把一条SQL语句解析到statement结构里去. 使用该接口访问数据库是当前比较好的的一种方法
     if (sqlite3_prepare_v2(db, [sqlQuery UTF8String], -1, &statement, nil) == SQLITE_OK) {
@@ -89,25 +145,97 @@
             NSString *nsNameStr = [[NSString alloc]initWithUTF8String:name];
             
             int age = sqlite3_column_int(statement, 2);
+            NSString *ageStr = [NSString stringWithFormat:@"%d",age];
             
             char *address = (char*)sqlite3_column_text(statement, 3);
             NSString *nsAddressStr = [[NSString alloc]initWithUTF8String:address];
             
-            NSLog(@"row:%@   name:%@  age:%d  address:%@",statement,nsNameStr,age, nsAddressStr);
+            int ID = sqlite3_column_int(statement, 0);
+            NSString *IDStr = [NSString stringWithFormat:@"%d",ID];
+            
+            NSLog(@"row:%d   name:%@  age:%d  address:%@",ID,nsNameStr,age, nsAddressStr);
+            NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithObjects:@[IDStr,nsNameStr,ageStr,nsAddressStr] forKeys:@[@"userId",@"name",@"age",@"address"]];
+
+            [self.array addObject:dic];
         }
     }
     sqlite3_close(db);
+    [self.DBTableView reloadData];
 }
 //数据库操作
 -(void)execSql:(NSString *)sql
 {
+    [self openDB];
     char *err;
     if (sqlite3_exec(db, [sql UTF8String], NULL, NULL, &err) != SQLITE_OK) {
         NSLog(@"数据库操作数据失败:%s",err);
     }else{
         NSLog(@"%@",sql);
     }
-    sqlite3_close(db);
+//    sqlite3_close(db);
+    
 }
+
+#pragma mark - tableviewDelegate
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.array.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    NSString *identifier = @"cell";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
+    if (cell == nil) {
+        cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
+    }
+    cell.textLabel.text = [[self.array objectAtIndex:indexPath.row] objectForKey:@"name"];
+    cell.detailTextLabel.text = [[self.array objectAtIndex:indexPath.row] objectForKey:@"address"];
+    return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    updateViewController *updateVC = [[updateViewController alloc]init];
+    NSDictionary *userDic =  [self.array objectAtIndex:indexPath.row];
+    [updateVC pushWithDic:userDic];
+    [self presentViewController:updateVC animated:YES completion:nil];
+}
+
+-(UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return UITableViewCellEditingStyleDelete;
+}
+
+/*改变删除按钮的title*/
+-(NSString *)tableView:(UITableView *)tableView titleForDeleteConfirmationButtonForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return @"删除";
+}
+
+/*删除用到的函数*/
+-(void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (editingStyle ==UITableViewCellEditingStyleDelete)
+    {
+        NSDictionary *userDic =  [self.array objectAtIndex:indexPath.row];
+        NSString *userId = [userDic objectForKey:@"userId"];
+        [self.array removeObjectAtIndex:indexPath.row];  //删除数组里的数据
+        //删除数据库信息
+        NSString *sql=[NSString stringWithFormat:@"DELETE FROM PERSONINFO WHERE id ='%@'",userId];
+        [self execSql:sql];
+        [self.DBTableView deleteRowsAtIndexPaths:[NSMutableArray arrayWithObject:indexPath]withRowAnimation:UITableViewRowAnimationAutomatic];//删除对应数据的cell
+        
+    }
+}
+
+#pragma mark - AddInformationDelegate
+-(void)addinformation:(NSDictionary *)dic{
+    NSString *sql1 = [NSString stringWithFormat:
+                      @"INSERT INTO '%@' ('%@', '%@', '%@') VALUES ('%@', '%@', '%@')",
+                      TABLENAME, NAME, AGE, ADDRESS, dic[@"name"], dic[@"age"], dic[@"address"]];
+    [self execSql:sql1];
+    [self.DBTableView reloadData];
+}
+
+
 
 @end

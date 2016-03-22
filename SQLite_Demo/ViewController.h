@@ -10,6 +10,8 @@
 
 @interface ViewController : UIViewController
 
++ (ViewController *)sharedDB;
 
+- (void)updateDBWithDic:(NSDictionary *)dic;
 @end
 

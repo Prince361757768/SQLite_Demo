@@ -36,37 +36,79 @@
                                             <action selector="delete:" destination="BYZ-38-t0r" eventType="touchUpInside" id="pFk-LU-Ugz"/>
                                         </connections>
                                     </button>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cyz-qQ-dvp">
-                                        <rect key="frame" x="300" y="0.0" width="150" height="408"/>
-                                        <color key="backgroundColor" red="0.38431372549999998" green="0.83921568629999999" blue="0.65490196079999996" alpha="1" colorSpace="calibratedRGB"/>
-                                        <state key="normal" title="改"/>
-                                        <connections>
-                                            <action selector="update:" destination="BYZ-38-t0r" eventType="touchUpInside" id="UKU-YS-WFm"/>
-                                        </connections>
-                                    </button>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1lU-wk-PTz">
                                         <rect key="frame" x="450" y="0.0" width="150" height="408"/>
                                         <color key="backgroundColor" red="1" green="1" blue="0.3587740385" alpha="1" colorSpace="calibratedRGB"/>
-                                        <state key="normal" title="查"/>
+                                        <state key="normal" title="update"/>
                                         <connections>
                                             <action selector="select:" destination="BYZ-38-t0r" eventType="touchUpInside" id="Qf2-YU-mZv"/>
                                         </connections>
                                     </button>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cyz-qQ-dvp">
+                                        <rect key="frame" x="300" y="0.0" width="150" height="408"/>
+                                        <color key="backgroundColor" red="0.38431372549999998" green="0.83921568629999999" blue="0.65490196079999996" alpha="1" colorSpace="calibratedRGB"/>
+                                        <state key="normal" title="close"/>
+                                        <connections>
+                                            <action selector="close:" destination="BYZ-38-t0r" eventType="touchUpInside" id="q5f-QP-Xvi"/>
+                                        </connections>
+                                    </button>
                                 </subviews>
                             </stackView>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="czM-nC-BMP">
+                                <rect key="frame" x="0.0" y="0.0" width="240" height="128"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <connections>
+                                    <outlet property="dataSource" destination="BYZ-38-t0r" id="OMJ-Q2-YK7"/>
+                                    <outlet property="delegate" destination="BYZ-38-t0r" id="naF-BL-2Di"/>
+                                </connections>
+                            </tableView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="9s3-gc-Y7L" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="60" id="1XN-G5-3nb"/>
+                            <constraint firstItem="czM-nC-BMP" firstAttribute="top" secondItem="9s3-gc-Y7L" secondAttribute="bottom" constant="8" id="0Zx-AQ-StD">
+                                <variation key="heightClass=regular-widthClass=compact" constant="0.0"/>
+                            </constraint>
+                            <constraint firstItem="9s3-gc-Y7L" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="60" id="1XN-G5-3nb">
+                                <variation key="heightClass=regular-widthClass=compact" constant="20"/>
+                            </constraint>
+                            <constraint firstItem="czM-nC-BMP" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="804-0Z-7Vw"/>
                             <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="9s3-gc-Y7L" secondAttribute="bottom" constant="112" id="GeT-u0-Cd9"/>
                             <constraint firstItem="9s3-gc-Y7L" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="UoO-tZ-8TQ"/>
                             <constraint firstAttribute="trailing" secondItem="9s3-gc-Y7L" secondAttribute="trailing" id="X8N-Bg-baS"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="czM-nC-BMP" secondAttribute="bottom" id="dq9-RK-EsJ"/>
+                            <constraint firstAttribute="trailing" secondItem="czM-nC-BMP" secondAttribute="trailing" id="oTi-h2-x8b"/>
                         </constraints>
+                        <variation key="default">
+                            <mask key="subviews">
+                                <exclude reference="czM-nC-BMP"/>
+                            </mask>
+                            <mask key="constraints">
+                                <exclude reference="0Zx-AQ-StD"/>
+                                <exclude reference="804-0Z-7Vw"/>
+                                <exclude reference="oTi-h2-x8b"/>
+                                <exclude reference="dq9-RK-EsJ"/>
+                            </mask>
+                        </variation>
+                        <variation key="heightClass=regular-widthClass=compact">
+                            <mask key="subviews">
+                                <include reference="czM-nC-BMP"/>
+                            </mask>
+                            <mask key="constraints">
+                                <include reference="0Zx-AQ-StD"/>
+                                <include reference="804-0Z-7Vw"/>
+                                <include reference="oTi-h2-x8b"/>
+                                <exclude reference="GeT-u0-Cd9"/>
+                                <include reference="dq9-RK-EsJ"/>
+                            </mask>
+                        </variation>
                     </view>
+                    <connections>
+                        <outlet property="DBTableView" destination="czM-nC-BMP" id="rQ0-A3-Gih"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="340" y="429"/>
+            <point key="canvasLocation" x="304.5" y="403.5"/>
         </scene>
     </scenes>
 </document>
